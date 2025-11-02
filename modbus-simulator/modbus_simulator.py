@@ -1,92 +1,83 @@
-# File: modbus_simulator.py
-
-from pymodbus.server import StartTcpServer
-from pymodbus.device import ModbusDeviceIdentification
+# modbus-simulator/modbus_simulator.py
+from pymodbus.server.sync import StartTcpServer
 from pymodbus.datastore import ModbusSequentialDataBlock, ModbusSlaveContext, ModbusServerContext
-import threading, time, struct, nest_asyncio, json, paho.mqtt.client as mqtt
+import threading, time, struct, json, paho.mqtt.client as mqtt, random
 
-nest_asyncio.apply()
+# 20 KHU VỰC
+AREAS = [
+    "Quan1","Quan3","Quan4","Quan5","Quan6","Quan7","Quan8","Quan10",
+    "Quan11","Quan12","BinhThanh","BinhTan","GoVap","PhuNhuan",
+    "TanBinh","TanPhu","BinhChanh","CanGio","CuChi","HocMon","NhaBe"
+]
 
-#CONFIG 
-SLAVE_ID    = 1
 MQTT_BROKER = "mosquitto"
-MQTT_PORT   = 1883
-MQTT_TOPIC  = "modbus/sensor1"
+MQTT_PORT = 1883
+MQTT_TOPIC_PREFIX = "airquality/sensor"
 
-#SETUP MODBUS STORE
-store   = ModbusSlaveContext(hr=ModbusSequentialDataBlock(0, [0]*30))
-context = ModbusServerContext(slaves={SLAVE_ID: store}, single=False)
+# Tạo 20 slave Modbus
+stores = {i: ModbusSlaveContext(hr=ModbusSequentialDataBlock(0, [0]*100)) for i in range(1, len(AREAS)+1)}
+context = ModbusServerContext(slaves=stores, single=False)
 
-identity = ModbusDeviceIdentification()
-identity.VendorName        = 'IoT Demo'
-identity.ProductCode       = 'DE'
-identity.VendorUrl         = 'https://example.com'
-identity.ProductName       = 'ModbusSim'
-identity.ModelName         = 'ModbusSim'
-identity.MajorMinorRevision= '1.0'
-
-#SETUP MQTT CLIENT
+# Kết nối MQTT
 mqtt_client = mqtt.Client()
 mqtt_client.connect(MQTT_BROKER, MQTT_PORT, keepalive=60)
-mqtt_client.reconnect_delay_set(min_delay=1, max_delay=120)
 mqtt_client.loop_start()
 
-
-#HELPERS
+# Float → 2 registers
 def float_to_regs(f):
     b = struct.pack('>f', f)
     return [int.from_bytes(b[0:2], 'big'), int.from_bytes(b[2:4], 'big')]
 
-#SERVER THREAD
+# Modbus Server
 def run_modbus_server():
-    print("Modbus Simulator listening on port 502")
-    StartTcpServer(context, identity=identity, address=("0.0.0.0", 502))
+    StartTcpServer(context, address=("0.0.0.0", 502))
 
-server_thread = threading.Thread(target=run_modbus_server, daemon=True)
-server_thread.start()
+threading.Thread(target=run_modbus_server, daemon=True).start()
 
-#UPDATE LOOP 
+# Data Generator + Publish
 def update_and_publish():
-    idx = 0
     while True:
-        # simulate measurements
-        V_L1  = 220 + 10*(idx % 3)
-        I_L1  =   5 +    (idx % 3)
-        VA_L1 = V_L1 * I_L1
-        P_L1  = 0.9 * VA_L1
+        for idx, area in enumerate(AREAS, start=1):
+            pm25 = round(random.uniform(5, 120), 2)
+            pm10 = round(pm25 * random.uniform(1.3, 2.8), 2)
+            co2  = round(random.uniform(380, 1600), 2)
+            no2  = round(random.uniform(5, 220), 2)
+            temp = round(random.uniform(22, 38), 2)
+            hum  = round(random.uniform(40, 95), 2)
 
-        # write into Modbus registers at addresses 1,13,19,25
-        context[SLAVE_ID].setValues(3,  1, float_to_regs(V_L1))
-        context[SLAVE_ID].setValues(3, 13, float_to_regs(I_L1))
-        context[SLAVE_ID].setValues(3, 19, float_to_regs(VA_L1))
-        context[SLAVE_ID].setValues(3, 25, float_to_regs(P_L1))
+            # Ghi Modbus
+            store = stores[idx]
+            store.setValues(3, 0,  float_to_regs(pm25))
+            store.setValues(3, 2,  float_to_regs(pm10))
+            store.setValues(3, 4,  float_to_regs(co2))
+            store.setValues(3, 6,  float_to_regs(no2))
+            store.setValues(3, 8,  float_to_regs(temp))
+            store.setValues(3, 10, float_to_regs(hum))
 
-        # publish the same JSON payload
-        payload = {
-            "device_id":"sensor1",
-            "V_L1": round(V_L1,2),
-            "I_L1": round(I_L1,2),
-            "VA_L1": round(VA_L1,2),
-            "P_L1": round(P_L1,2),
-            "timestamp": int(time.time())
-        }
-        result = mqtt_client.publish(MQTT_TOPIC, json.dumps(payload))
-        status = result[0]
-        if status == 0:
-            print("Published to MQTT:", payload)
-        else:
-            print("Failed to send message to MQTT broker:", status)
+            # Payload
+            payload = {
+                "device_id": f"sensor_{area}",
+                "location": area,
+                "PM2.5": pm25,
+                "PM10": pm10,
+                "CO2": co2,
+                "NO2": no2,
+                "Temperature": temp,
+                "Humidity": hum,
+                "timestamp": int(time.time())
+            }
 
+            # Publish
+            topic = f"{MQTT_TOPIC_PREFIX}/{area}"
+            mqtt_client.publish(topic, json.dumps(payload))
 
-        idx += 1
+            # CHỈ IN 1 DÒNG JSON
+            print(f"Published to MQTT: {json.dumps(payload, separators=(', ', ': '))}")
+
         time.sleep(2)
 
-upd_thread = threading.Thread(target=update_and_publish, daemon=True)
-upd_thread.start()
+threading.Thread(target=update_and_publish, daemon=True).start()
 
-#KEEP RUNNING
-try:
-    while True:
-        time.sleep(1)
-except KeyboardInterrupt:
-    print("Stopping simulator…")
+# Giữ container chạy
+while True:
+    time.sleep(1)

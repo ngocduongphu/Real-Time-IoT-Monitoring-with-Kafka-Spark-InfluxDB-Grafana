@@ -1,79 +1,42 @@
-# 🚀 Real-Time IoT Data Pipeline | Confluent MQTT
+# Real-Time IoT Monitoring with Kafka, Spark, InfluxDB & Grafana
 
-> **Production-ready streaming data architecture** showcasing modern data engineering practices with **Apache Spark**, **MQTT**, **InfluxDB**, and **Docker**
+**Hệ thống giám sát chất lượng không khí thời gian thực tại TP.HCM**  
+Sử dụng **Apache Kafka, Spark Streaming, InfluxDB, Grafana** và **Docker Compose**.
 
-## 🎯 Project Highlights
-
-**End-to-End Data Engineering Solution** demonstrating:
-- ⚡ **Real-time streaming** with Apache Spark & MQTT
-- 🏭 **Industrial IoT simulation** using Modbus protocol
-- 📊 **Time-series data storage** with InfluxDB
-- 🐳 **Containerized microservices** architecture
-- 📈 **Scalable data processing** pipeline
-
-## 🛠️ Tech Stack
-
-| Component | Technology | Purpose |
-|-----------|------------|----------|
-| **Streaming Engine** | Apache Spark | Real-time data processing |
-| **Message Broker** | MQTT (Mosquitto) | IoT device communication |
-| **Time-Series DB** | InfluxDB | High-performance data storage |
-| **Data Collection** | Telegraf | Metrics aggregation |
-| **Orchestration** | Docker Compose | Service management |
-| **Protocol Simulation** | Modbus | Industrial device emulation |
-
-## 🏗️ Architecture Overview
-
-```
-[Modbus Devices] → [MQTT Broker] → [Spark Streaming] → [InfluxDB] → [Analytics]
-       ↓              ↓              ↓              ↓
-   Simulated      Message Queue   Real-time      Time-series
-   Industrial     & Routing       Processing     Storage
-   Data
-```
-
-## 🚀 Quick Start
-
-**One-command deployment:**
-```bash
-docker-compose up -d
-```
-
-**What gets deployed:**
-- MQTT broker with custom configuration
-- Modbus device simulators generating realistic IoT data
-- Spark streaming application processing data in real-time
-- InfluxDB instance for time-series storage
-- Telegraf for metrics collection
-
-## 📁 Project Structure
-
-```
-confluent-mqtt/
-├── modbus-simulator/     # Industrial device simulation
-├── mqtt-forwarder/       # MQTT message routing
-├── spark/               # Real-time data processing
-├── New folder/          # Jupyter development notebooks
-├── docker-compose.yml   # Service orchestration
-├── mosquitto.conf      # MQTT broker config
-└── telegraf.conf       # Metrics collection config
-```
-
-## 💡 Key Features
-
-- **Scalable Architecture**: Microservices design for horizontal scaling
-- **Real-time Processing**: Sub-second data processing with Spark Streaming
-- **Industrial Standards**: Modbus protocol implementation
-- **Production Ready**: Docker containerization with proper configurations
-- **Monitoring Ready**: Built-in metrics collection with Telegraf
-- **Development Friendly**: Jupyter notebooks for experimentation
-
-## 🎯 Perfect for Data Engineers who want to see:
-- Modern streaming data architectures
-- IoT data pipeline implementation
-- Docker-based service orchestration
-- Real-time analytics capabilities
-- Industrial protocol integration
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue?logo=docker)](docker-compose.yml)
+[![GitHub last commit](https://img.shields.io/github/last-commit/yourusername/Real-Time-IoT-Monitoring-with-Kafka-Spark-InfluxDB-Grafana)](https://github.com/yourusername/Real-Time-IoT-Monitoring-with-Kafka-Spark-InfluxDB-Grafana/commits/main)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
-*This project demonstrates practical experience with production-grade data engineering tools and real-time streaming architectures.*
+
+## Mục tiêu
+Xây dựng hệ thống **giám sát AQI thời gian thực** tại **21 quận/huyện TP.HCM** với:
+- Dữ liệu cảm biến giả lập (Modbus TCP)
+- Xử lý streaming bằng **Apache Spark**
+- Lưu trữ chuỗi thời gian vào **InfluxDB**
+- Trực quan hóa real-time trên **Grafana**
+- Cảnh báo email tự động mỗi **15 phút**
+
+---
+
+## Tính năng chính
+| Tính năng | Mô tả |
+|---------|-------|
+| **21 cảm biến giả lập** | Mô phỏng PM2.5, PM10, NO₂, CO₂, nhiệt độ, độ ẩm |
+| **Real-time pipeline** | Độ trễ < 3 giây từ cảm biến → dashboard |
+| **Cảnh báo thông minh** | Email tổng hợp mỗi 15 phút khi AQI > 100 |
+| **Dashboard Grafana** | Heatmap, Line chart, Top 5 quận ô nhiễm |
+| **Docker Compose** | 1 lệnh chạy toàn hệ thống |
+
+---
+
+## Kiến trúc hệ thống
+
+```mermaid
+graph TD
+    A[Modbus Simulator<br>20 cảm biến] --> B[Mosquitto<br>MQTT]
+    B --> C[Telegraf → Kafka]
+    C --> D[Spark Streaming]
+    D --> E[InfluxDB]
+    D --> F[Email Alert]
+    E --> G[Grafana Dashboard]

@@ -1,17 +1,25 @@
-FROM openjdk:11-jre-slim
+# FROM apache/spark-py:v3.2.2
 
-# 1. Install OS & Python deps
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y \
-      python3 python3-pip netcat-openbsd && \
-    rm -rf /var/lib/apt/lists/*
+# USER root
 
-# 2. Copy in just the list of Python requirements
-COPY requirements.txt /app/requirements.txt
-RUN pip3 install -r /app/requirements.txt
+# WORKDIR /app
+# COPY requirements.txt .
+# COPY spark_to_influx.py .
 
-# 3. Now copy your app code
+# RUN pip3 install --no-cache-dir --target=/app/libs -r requirements.txt
+
+# ENV PYTHONPATH="/app/libs:${PYTHONPATH}"
+
+# CMD ["/opt/spark/bin/spark-submit", \
+#      "--master", "local[*]", \
+#      "--packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.2.2", \
+#      "/app/spark_to_influx.py"]
+
+FROM apache/spark-py:v3.2.2
+USER root
 WORKDIR /app
-COPY spark_to_influx.py /app/
-
-ENTRYPOINT ["spark-submit","--master","local[*]","--packages","org.apache.spark:spark-sql-kafka-0-10_2.12:3.2.2","/app/spark_to_influx.py"]
+COPY requirements.txt .
+COPY spark_aqi_alert.py .
+RUN pip3 install --no-cache-dir --target=/app/libs -r requirements.txt
+ENV PYTHONPATH="/app/libs:${PYTHONPATH}"
+CMD ["/opt/spark/bin/spark-submit", "--master", "local[*]", "--packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.2.2", "/app/spark_aqi_alert.py"]

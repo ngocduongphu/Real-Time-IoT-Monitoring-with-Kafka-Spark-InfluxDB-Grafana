@@ -1,9 +1,8 @@
-# mqtt-forwarder/Dockerfile
 FROM python:3.11-slim
 
 WORKDIR /app
 COPY mqtt_forwarder.py .
 
-RUN pip install pymodbus paho-mqtt
+RUN pip install pymodbus==2.5.3 paho-mqtt==1.6.1
 
 CMD ["python", "mqtt_forwarder.py"]

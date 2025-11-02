@@ -1,4 +1,3 @@
-
 services:
   # MQTT Broker
   mosquitto:
@@ -42,13 +41,13 @@ services:
     depends_on:
       - zookeeper
     ports:
-      - "9092:9092"      # internal client
-      - "19092:19092"    # host access
+      - "9092:9092"
+      - "19092:19092"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092,OUTSIDE://0.0.0.0:19092"
-      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092,OUTSIDE://localhost:19092"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092,OUTSIDE://host.docker.internal:19092"
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,OUTSIDE:PLAINTEXT"
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     restart: always
@@ -58,11 +57,10 @@ services:
       test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1"]
       interval: 10s
       timeout: 10s
-      start_period: 60s   # <- Give Kafka time to boot
+      start_period: 60s
       retries: 10
 
-      
-  #Telagraf
+  # Telegraf: MQTT → Kafka
   telegraf:
     image: telegraf:1.30
     container_name: telegraf
@@ -70,8 +68,6 @@ services:
       kafka:
         condition: service_healthy
       mosquitto:
-        condition: service_healthy
-      influxdb:
         condition: service_healthy
     volumes:
       - ./telegraf.conf:/etc/telegraf/telegraf.conf:ro
@@ -118,48 +114,55 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      
-  #PySpark
+
+  # Spark Streaming + Alert
   spark:
     build:
-      context: ./spark      
-      dockerfile: Dockerfile 
+      context: ./spark
+      dockerfile: Dockerfile
     depends_on:
-      - kafka
-      - influxdb
+      kafka:
+        condition: service_healthy
+      influxdb:
+        condition: service_healthy
     environment:
-      INFLUX_URL:    "http://influxdb:8086"
-      INFLUX_TOKEN:  "admintoken"
-      INFLUX_ORG:    "myorg"
+      INFLUX_URL: "http://influxdb:8086"
+      INFLUX_TOKEN: "admintoken"
+      INFLUX_ORG: "myorg"
       INFLUX_BUCKET: "iot_data"
+      SMTP_USER: "your_email@gmail.com"
+      SMTP_PASS: "your_app_password"
+      ALERT_EMAIL: "admin@hcm-airquality.vn"
     ports:
-    - "4040:4040"
+      - "4040:4040"
     networks:
       - mqtt-kafka-net
-
-      
-  #Modbus Simulator
+  # Modbus Simulator (20 sensors)
   modbus-simulator:
     build: ./modbus-simulator
     container_name: modbus-simulator
     depends_on:
-      - mosquitto
+      mosquitto:
+        condition: service_healthy
     networks:
       - mqtt-kafka-net
-  #MQTT Forwarder
+
+  # MQTT Forwarder (real sensor → MQTT)
   mqtt-forwarder:
     build: ./mqtt-forwarder
     container_name: mqtt-forwarder
     depends_on:
-      - modbus-simulator
-      - mosquitto
+      mosquitto:
+        condition: service_healthy
+      modbus-simulator:
+        condition: service_started
     networks:
       - mqtt-kafka-net
+
 volumes:
   influxdb-storage:
   grafana-storage:
 
 networks:
   mqtt-kafka-net:
-    external: true
-
+    driver: bridge
