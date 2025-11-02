@@ -40,6 +40,7 @@
 
 ## 📂 Cấu trúc thư mục
 
+```plaintext
 project/
 ├── modbus-simulator/              # Mô phỏng 20 cảm biến AQI
 │   ├── Dockerfile
