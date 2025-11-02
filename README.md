@@ -19,7 +19,7 @@
 ## 🧩 Kiến trúc hệ thống
 
 <p align="center">
-  <img src="./architecture.png" alt="System Architecture" width="750"/>
+  <img src="architecture.png" alt="System Architecture" width="750"/>
 </p>
 +-------------------+       +------------------+       +------------------+
 |   Modbus Devices  | --->  |   MQTT Broker    | --->  |      Kafka       |
