@@ -15,16 +15,30 @@
 
 ---
 
-## Kiến trúc hệ thống
+## 🧩 Kiến trúc hệ thống
 
-```mermaid
-graph TD
-    A[Modbus Simulator<br>20 cảm biến] --> B[Mosquitto<br>MQTT]
-    B --> C[Telegraf → Kafka]
-    C --> D[Spark Streaming]
-    D --> E[InfluxDB]
-    D --> F[Email Alert]
-    E --> G[Grafana Dashboard]
++-------------------+       +------------------+       +------------------+
+|   Modbus Devices  | --->  |   MQTT Broker    | --->  |      Kafka       |
+| (20 khu vực HCM)  |       | (Mosquitto)      |       | (airquality_raw) |
++-------------------+       +------------------+       +------------------+
+        |                           |                           |
+        |                           v                           v
+        |                   +---------------+           +----------------+
+        |                   |  Telegraf     | --------> | Apache Spark   |
+        |                   | (MQTT→Kafka)  |           | Streaming Job  |
+        |                   +---------------+           +----------------+
+        |                                                       |
+        |                                                       v
+        |                                             +----------------+
+        |                                             |   InfluxDB     |
+        |                                             | (Time Series)  |
+        |                                             +----------------+
+        |                                                       |
+        |                                                       v
+        |                                             +----------------+
+        |                                             |   Grafana      |
+        |                                             | (Dashboard)    |
+        +---------------------------------------------+----------------+
 
 ---
 
@@ -42,28 +56,28 @@ graph TD
 | **Telegraf** | `Collector` | Chuyển tiếp dữ liệu từ MQTT → Kafka |
 | **Docker Compose** | `Orchestration` | Quản lý toàn bộ hệ thống container |
 
+---
+
 ## 📂 Cấu trúc thư mục
 
-```bash
 project/
-├── modbus-simulator/                 # Mô phỏng 20 cảm biến AQI
+├── modbus-simulator/              # Mô phỏng 20 cảm biến AQI
 │   ├── Dockerfile
 │   └── modbus_simulator.py
 │
-├── mqtt-forwarder/                   # Đọc dữ liệu Modbus → publish MQTT
+├── mqtt-forwarder/                # Đọc Modbus → publish MQTT
 │   ├── Dockerfile
 │   └── mqtt_forwarder.py
 │
-├── spark/                            # Spark Streaming xử lý + cảnh báo
+├── spark/                         # Spark Streaming xử lý + cảnh báo
 │   ├── Dockerfile
 │   ├── requirements.txt
 │   └── spark_aqi_alert.py
 │
-├── mosquitto.conf                    # Cấu hình MQTT Broker
-├── telegraf.conf                     # MQTT → Kafka bridge
-├── docker-compose.yml                # Orchestration toàn hệ thống
-└── README.md                         # Tài liệu mô tả hệ thống
-
+├── mosquitto.conf                 # Cấu hình MQTT Broker
+├── docker-compose.yml             # Orchestration toàn hệ thống
+├── telegraf.conf                  # MQTT → Kafka bridge
+└── README.md                      # Tài liệu này
 
 ---
 
@@ -127,3 +141,15 @@ Spark tự động gửi cảnh báo:
 docker-compose down
 
 ---
+
+## 🧠 Tác giả
+
+**Nhóm 01 – Real-Time IoT Monitoring (HCMUTE)**  
+📧 Email: `22133010@student.hcmute.edu.vn`  
+💡 Công nghệ: Python • Spark • Kafka • InfluxDB • Docker • Grafana
+
+---
+
+## 🧾 Giấy phép
+
+Distributed under the MIT License. See `LICENSE` for details.
