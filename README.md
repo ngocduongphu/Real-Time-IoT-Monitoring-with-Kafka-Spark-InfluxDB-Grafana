@@ -85,10 +85,11 @@ docker logs -f mqtt-forwarder
 
 ### Kiểm tra dữ liệu Kafka (real-time)
 docker exec -it kafka bash
+
 kafka-console-consumer --bootstrap-server localhost:19092 --topic airquality_raw --from-beginning
 
 ### Xem log Spark Streaming (xử lý & cảnh báo)
-docker logs -f spark
+docker logs -f real_time_iot_monitoring_with_kafka_spark_influxdb_grafana-spark-1
 
 > Spark sẽ hiển thị bảng dữ liệu trung bình từng phút, ghi dữ liệu vào InfluxDB và gửi email cảnh báo AQI.
 
@@ -123,14 +124,3 @@ docker-compose down
 
 ---
 
-## 🧠 Tác giả
-
-**Nhóm 01 – Real-Time IoT Monitoring (HCMUTE)**  
-📧 Email: `22133010@student.hcmute.edu.vn`  
-💡 Công nghệ: Python • Spark • Kafka • InfluxDB • Docker • Grafana
-
----
-
-## 🧾 Giấy phép
-
-Distributed under the MIT License. See `LICENSE` for details.
