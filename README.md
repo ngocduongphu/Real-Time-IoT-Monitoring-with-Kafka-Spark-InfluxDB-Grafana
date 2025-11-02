@@ -40,3 +40,30 @@ graph TD
     D --> E[InfluxDB]
     D --> F[Email Alert]
     E --> G[Grafana Dashboard]
+
+## Demo & Kiểm tra hệ thống
+### Cài đặt nhanh
+
+```bash
+# Tạo mạng Docker riêng để các container giao tiếp với nhau
+docker network create mqtt-kafka-net
+
+# Khởi động toàn bộ hệ thống (Modbus, MQTT, Kafka, Spark, InfluxDB, Grafana) ở chế độ nền
+docker-compose up -d
+
+```bash
+docker network create mqtt-kafka-net
+docker-compose up -d
+
+# 1. Xem log Modbus Simulator (cảm biến)
+docker logs -f modbus-simulator
+
+# 2. Xem log MQTT Forwarder
+docker logs -f mqtt-forwarder
+
+# 3. Xem dữ liệu Kafka (real-time)
+docker exec -it kafka bash
+kafka-console-consumer --bootstrap-server localhost:19092 --topic airquality_raw --from-beginning
+
+# 4. Xem log Spark Streaming (xử lý + cảnh báo)
+docker logs -f real_time_iot_monitoring_with_kafka_spark_influxdb_grafana-spark-1
