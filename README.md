@@ -19,15 +19,8 @@
 ## 🧩 Kiến trúc hệ thống
 
 <p align="center">
-  <img src="architecture.png" alt="System Architecture" width="750"/>
+  <img src="./architecture.png" alt="System Architecture" width="750"/>
 </p>
-graph TD
-    A[Modbus Simulator<br>20 cảm biến] --> B[Mosquitto<br>MQTT]
-    B --> C[Telegraf → Kafka]
-    C --> D[Spark Streaming]
-    D --> E[InfluxDB]
-    D --> F[Email Alert]
-    E --> G[Grafana Dashboard]
 
 ## 🧰 Thành phần & Công nghệ
 
