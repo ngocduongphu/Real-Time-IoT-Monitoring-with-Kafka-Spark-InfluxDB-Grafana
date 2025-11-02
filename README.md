@@ -59,7 +59,7 @@ project/
 ├── docker-compose.yml             # Orchestration toàn hệ thống
 ├── telegraf.conf                  # MQTT → Kafka bridge
 └── README.md                      # Tài liệu này
-
+```
 ---
 
 ## ⚙️ Triển khai hệ thống
