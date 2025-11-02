@@ -19,7 +19,7 @@
 ## 🧩 Kiến trúc hệ thống
 
 <p align="center">
-  <img src="./architecture.png" alt="System Architecture" width="750"/>
+  <img src="images/architecture.png" alt="System Architecture" width="750"/>
 </p>
 
 ## 🧰 Thành phần & Công nghệ
