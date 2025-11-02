@@ -1,69 +1,143 @@
-# Real-Time IoT Monitoring with Kafka, Spark, InfluxDB & Grafana
+# 🌍 Real-Time IoT Air Quality Monitoring System  
+### ⚡ Spark Streaming | MQTT | Kafka | InfluxDB | Grafana | Docker
 
-**Hệ thống giám sát chất lượng không khí thời gian thực tại TP.HCM**  
-Sử dụng **Apache Kafka, Spark Streaming, InfluxDB, Grafana** và **Docker Compose**.
-
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue?logo=docker)](docker-compose.yml)
-[![GitHub last commit](https://img.shields.io/github/last-commit/yourusername/Real-Time-IoT-Monitoring-with-Kafka-Spark-InfluxDB-Grafana)](https://github.com/yourusername/Real-Time-IoT-Monitoring-with-Kafka-Spark-InfluxDB-Grafana/commits/main)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+> **Dự án IoT Big Data mô phỏng hệ thống giám sát chất lượng không khí thời gian thực**, sử dụng pipeline xử lý dữ liệu streaming với **Apache Spark**, **MQTT**, **Kafka**, **InfluxDB** và **Grafana**.
 
 ---
 
-## Mục tiêu
-Xây dựng hệ thống **giám sát AQI thời gian thực** tại **21 quận/huyện TP.HCM** với:
-- Dữ liệu cảm biến giả lập (Modbus TCP)
-- Xử lý streaming bằng **Apache Spark**
-- Lưu trữ chuỗi thời gian vào **InfluxDB**
-- Trực quan hóa real-time trên **Grafana**
-- Cảnh báo email tự động mỗi **15 phút**
+## 🎯 Mục tiêu dự án
+
+- 🚀 Mô phỏng **hệ thống IoT thực tế** đo nồng độ bụi mịn, khí độc, nhiệt độ, độ ẩm.  
+- 🔄 Xây dựng **data pipeline thời gian thực** từ sensor → MQTT → Kafka → Spark → InfluxDB.  
+- 📊 Trực quan hóa dữ liệu **real-time** trên Grafana dashboard.  
+- ⚠️ Tích hợp cảnh báo AQI (Air Quality Index) qua **email tự động**.  
+- 🧱 Tất cả được container hóa bằng **Docker Compose**.
 
 ---
 
-## Tính năng chính
-| Tính năng | Mô tả |
-|---------|-------|
-| **21 cảm biến giả lập** | Mô phỏng PM2.5, PM10, NO₂, CO₂, nhiệt độ, độ ẩm |
-| **Real-time pipeline** | Độ trễ < 3 giây từ cảm biến → dashboard |
-| **Cảnh báo thông minh** | Email tổng hợp mỗi 15 phút khi AQI > 100 |
-| **Dashboard Grafana** | Heatmap, Line chart, Top 5 quận ô nhiễm |
-| **Docker Compose** | 1 lệnh chạy toàn hệ thống |
+## 🧩 Kiến trúc hệ thống
+
++-------------------+       +------------------+       +------------------+
+|   Modbus Devices  | --->  |   MQTT Broker    | --->  |      Kafka       |
+| (20 khu vực HCM)  |       | (Mosquitto)      |       | (airquality_raw) |
++-------------------+       +------------------+       +------------------+
+        |                           |                           |
+        |                           v                           v
+        |                   +---------------+           +----------------+
+        |                   |  Telegraf     | --------> | Apache Spark   |
+        |                   | (MQTT→Kafka)  |           | Streaming Job  |
+        |                   +---------------+           +----------------+
+        |                                                       |
+        |                                                       v
+        |                                             +----------------+
+        |                                             |   InfluxDB     |
+        |                                             | (Time Series)  |
+        |                                             +----------------+
+        |                                                       |
+        |                                                       v
+        |                                             +----------------+
+        |                                             |   Grafana      |
+        |                                             | (Dashboard)    |
+        +---------------------------------------------+----------------+
 
 ---
 
-## Kiến trúc hệ thống
+## 🧰 Thành phần & Công nghệ
 
-```mermaid
-graph TD
-    A[Modbus Simulator<br>20 cảm biến] --> B[Mosquitto<br>MQTT]
-    B --> C[Telegraf → Kafka]
-    C --> D[Spark Streaming]
-    D --> E[InfluxDB]
-    D --> F[Email Alert]
-    E --> G[Grafana Dashboard]
+| Thành phần | Công nghệ | Chức năng |
+|-------------|------------|------------|
+| **Modbus Simulator** | `Python + pymodbus` | Mô phỏng cảm biến AQI từ 20 khu vực |
+| **MQTT Broker** | `Eclipse Mosquitto` | Trung gian truyền dữ liệu IoT |
+| **MQTT Forwarder** | `Python + paho-mqtt` | Đọc dữ liệu Modbus → publish lên MQTT |
+| **Kafka Broker** | `Confluent Kafka` | Streaming message queue |
+| **Spark Streaming** | `Apache Spark 3.2.2` | Xử lý dữ liệu real-time, tính AQI, gửi cảnh báo |
+| **InfluxDB 2.7** | `Time-series database` | Lưu dữ liệu cảm biến |
+| **Grafana** | `Dashboard UI` | Trực quan hóa dữ liệu real-time |
+| **Telegraf** | `Collector` | Chuyển tiếp dữ liệu từ MQTT → Kafka |
+| **Docker Compose** | `Orchestration` | Quản lý toàn bộ hệ thống container |
 
-## Demo & Kiểm tra hệ thống
-### Cài đặt nhanh
+---
 
-```bash
-# Tạo mạng Docker riêng để các container giao tiếp với nhau
+## 📂 Cấu trúc thư mục
+
+project/
+├── modbus-simulator/              # Mô phỏng 20 cảm biến AQI
+│   ├── Dockerfile
+│   └── modbus_simulator.py
+│
+├── mqtt-forwarder/                # Đọc Modbus → publish MQTT
+│   ├── Dockerfile
+│   └── mqtt_forwarder.py
+│
+├── spark/                         # Spark Streaming xử lý + cảnh báo
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   └── spark_aqi_alert.py
+│
+├── mosquitto.conf                 # Cấu hình MQTT Broker
+├── docker-compose.yml             # Orchestration toàn hệ thống
+├── telegraf.conf                  # MQTT → Kafka bridge
+└── README.md                      # Tài liệu này
+
+---
+
+## ⚙️ Triển khai hệ thống
+
+### 1️⃣ Tạo mạng Docker dùng chung
 docker network create mqtt-kafka-net
 
-# Khởi động toàn bộ hệ thống (Modbus, MQTT, Kafka, Spark, InfluxDB, Grafana) ở chế độ nền
+### 2️⃣ Khởi động toàn bộ hệ thống
 docker-compose up -d
 
-```bash
-docker network create mqtt-kafka-net
-docker-compose up -d
+> Lúc này các container sẽ tự động chạy:  
+> `modbus-simulator`, `mqtt-forwarder`, `mosquitto`, `kafka`, `spark`, `influxdb`, `grafana`.
 
-# 1. Xem log Modbus Simulator (cảm biến)
+---
+
+## 🔍 Demo & Kiểm tra hệ thống
+
+### Xem log Modbus Simulator (mô phỏng cảm biến)
 docker logs -f modbus-simulator
 
-# 2. Xem log MQTT Forwarder
+### Xem log MQTT Forwarder
 docker logs -f mqtt-forwarder
 
-# 3. Xem dữ liệu Kafka (real-time)
+### Kiểm tra dữ liệu Kafka (real-time)
 docker exec -it kafka bash
 kafka-console-consumer --bootstrap-server localhost:19092 --topic airquality_raw --from-beginning
 
-# 4. Xem log Spark Streaming (xử lý + cảnh báo)
-docker logs -f real_time_iot_monitoring_with_kafka_spark_influxdb_grafana-spark-1
+### Xem log Spark Streaming (xử lý & cảnh báo)
+docker logs -f spark
+
+> Spark sẽ hiển thị bảng dữ liệu trung bình từng phút, ghi dữ liệu vào InfluxDB và gửi email cảnh báo AQI.
+
+---
+
+## 📈 Truy cập Dashboard Grafana
+
+- Truy cập: [http://localhost:4000](http://localhost:4000)
+- Đăng nhập mặc định:
+  - **Username:** `admin`
+  - **Password:** `admin`
+- Thêm Data Source: `InfluxDB`
+  - URL: `http://influxdb:8086`
+  - Token: `admintoken`
+  - Org: `myorg`
+  - Bucket: `iot_data`
+
+---
+
+## ✉️ Cảnh báo qua Email
+
+Spark tự động gửi cảnh báo:
+- **Mức cảnh báo:** AQI > 100  
+- **Mức nguy hiểm:** AQI > 150  
+- Email tổng hợp gửi mỗi **15 phút**, bao gồm danh sách khu vực vượt ngưỡng.
+
+---
+
+## 🧪 Tắt toàn bộ container
+
+docker-compose down
+
+---
